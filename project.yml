@@ -1,0 +1,86 @@
+name: NotchKeeper
+options:
+  bundleIdPrefix: io.github.panbismarck
+  deploymentTarget:
+    macOS: "15.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    OTHER_SWIFT_FLAGS: "-strict-concurrency=complete"
+    ENABLE_HARDENED_RUNTIME: YES
+    MARKETING_VERSION: "0.3.1"
+    CURRENT_PROJECT_VERSION: "3"
+  configs:
+    # No Apple Developer account: both configs are ad-hoc signed ("-").
+    Debug:
+      CODE_SIGN_IDENTITY: "-"
+      CODE_SIGNING_REQUIRED: NO
+    Release:
+      CODE_SIGN_IDENTITY: "-"
+      CODE_SIGNING_REQUIRED: NO
+
+targets:
+  NotchKeeper:
+    type: application
+    platform: macOS
+    sources:
+      - Sources/App
+      - Sources/Core
+      - Sources/Shared
+      - Resources/Assets.xcassets
+    dependencies:
+      # notchkeeper-hook ships inside the app: NotchKeeper.app/Contents/MacOS/notchkeeper-hook
+      - target: notchkeeper-hook
+        embed: true
+        copy:
+          destination: executables
+    info:
+      path: Resources/Info.plist
+      properties:
+        CFBundleDisplayName: NotchKeeper
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSApplicationCategoryType: public.app-category.developer-tools
+        LSUIElement: true
+        LSMinimumSystemVersion: "15.0"
+        NSHumanReadableCopyright: ""
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.panbismarck.NotchKeeper
+        GENERATE_INFOPLIST_FILE: NO
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+
+  notchkeeper-hook:
+    type: tool
+    platform: macOS
+    sources:
+      - Sources/Helper
+      - Sources/Shared
+    settings:
+      base:
+        PRODUCT_NAME: notchkeeper-hook
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.panbismarck.NotchKeeper.hook
+
+  NotchKeeperTests:
+    type: bundle.unit-test
+    platform: macOS
+    # Pure logic compiled straight into the test bundle — no host app, no notch panel during tests.
+    sources:
+      - Sources/Core
+      - Sources/Shared
+      - Tests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.panbismarck.NotchKeeperTests
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  NotchKeeper:
+    build:
+      targets:
+        NotchKeeper: all
+    test:
+      targets:
+        - NotchKeeperTests
